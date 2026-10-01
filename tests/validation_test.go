@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 
-	"github.com/thameem/tyv/internal/validation"
+	"github.com/Thameempp/tyv-switch/internal/validation"
 )
 
 func TestProfileName_Valid(t *testing.T) {

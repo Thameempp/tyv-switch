@@ -35,14 +35,14 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/thameem/tyv/internal/config"
-	"github.com/thameem/tyv/internal/doctor"
-	"github.com/thameem/tyv/internal/exitcode"
-	"github.com/thameem/tyv/internal/launcher"
-	"github.com/thameem/tyv/internal/platform"
-	"github.com/thameem/tyv/internal/providers/antigravity"
-	"github.com/thameem/tyv/internal/selector"
-	"github.com/thameem/tyv/internal/validation"
+	"github.com/Thameempp/tyv-switch/internal/config"
+	"github.com/Thameempp/tyv-switch/internal/doctor"
+	"github.com/Thameempp/tyv-switch/internal/exitcode"
+	"github.com/Thameempp/tyv-switch/internal/launcher"
+	"github.com/Thameempp/tyv-switch/internal/platform"
+	"github.com/Thameempp/tyv-switch/internal/providers/antigravity"
+	"github.com/Thameempp/tyv-switch/internal/selector"
+	"github.com/Thameempp/tyv-switch/internal/validation"
 )
 
 // version is overridden at build time via -ldflags "-X main.version=...".

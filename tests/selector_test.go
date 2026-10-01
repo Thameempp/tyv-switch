@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thameem/tyv/internal/selector"
+	"github.com/Thameempp/tyv-switch/internal/selector"
 )
 
 var rows = []selector.Row{

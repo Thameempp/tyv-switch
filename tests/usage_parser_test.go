@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/thameem/tyv/internal/providers/antigravity"
+	"github.com/Thameempp/tyv-switch/internal/providers/antigravity"
 )
 
 const sampleUsage = `{"status":"SUCCESS","command":{"name":"usage","data":{"groups":[

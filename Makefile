@@ -1,5 +1,5 @@
 BINARY    := tyv
-MODULE    := github.com/thameem/tyv
+MODULE    := github.com/Thameempp/tyv-switch
 VERSION   := 0.1.0
 LDFLAGS   := -s -w -X main.version=$(VERSION)
 INSTALL   := $(HOME)/.local/bin

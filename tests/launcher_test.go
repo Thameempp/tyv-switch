@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/thameem/tyv/internal/launcher"
-	"github.com/thameem/tyv/internal/platform"
+	"github.com/Thameempp/tyv-switch/internal/launcher"
+	"github.com/Thameempp/tyv-switch/internal/platform"
 )
 
 func TestProfileEnvIsolatesHome(t *testing.T) {

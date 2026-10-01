@@ -38,8 +38,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/thameem/tyv/internal/config"
-	"github.com/thameem/tyv/internal/platform"
+	"github.com/Thameempp/tyv-switch/internal/config"
+	"github.com/Thameempp/tyv-switch/internal/platform"
 )
 
 // Launcher resolves the agy executable and builds the environment for

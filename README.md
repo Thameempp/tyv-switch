@@ -54,24 +54,24 @@ your PATH on most systems.
 ### Using make (recommended)
 
 ```sh
-git clone https://github.com/thameem/tyv
-cd tyv
+git clone https://github.com/Thameempp/tyv-switch
+cd tyv-switch
 make install
 ```
 
 ### Using the install script
 
 ```sh
-git clone https://github.com/thameem/tyv
-cd tyv
+git clone https://github.com/Thameempp/tyv-switch
+cd tyv-switch
 bash install.sh
 ```
 
 ### Manually (requires Go 1.27+)
 
 ```sh
-git clone https://github.com/thameem/tyv
-cd tyv
+git clone https://github.com/Thameempp/tyv-switch
+cd tyv-switch
 go build -ldflags="-s -w" -o tyv ./cmd/tyv/
 mkdir -p ~/.local/bin
 cp tyv ~/.local/bin/tyv

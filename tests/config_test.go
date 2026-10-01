@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/thameem/tyv/internal/config"
+	"github.com/Thameempp/tyv-switch/internal/config"
 )
 
 // newTestManager creates a Manager backed by a temp directory.
