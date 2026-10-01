@@ -13,6 +13,9 @@ build:
 ## install: build and install to $(INSTALL) (no sudo required)
 install: build
 	@mkdir -p $(INSTALL)
+	@# Remove first: overwriting a binary in place makes macOS kill the new
+	@# one ("zsh: killed") because it caches the old file's code signature.
+	@rm -f $(INSTALL)/$(BINARY)
 	@cp $(BINARY) $(INSTALL)/$(BINARY)
 	@chmod 755 $(INSTALL)/$(BINARY)
 	@echo "Installed: $(INSTALL)/$(BINARY)"

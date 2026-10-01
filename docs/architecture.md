@@ -41,7 +41,8 @@ delegates all authentication and AI functionality to the Antigravity CLI
 .
 ├── cmd/
 │   └── tyv/
-│       └── main.go              # Entry point, command dispatcher
+│       ├── main.go              # Entry point, command dispatcher
+│       └── usage.go             # Parallel, refreshable usage lookups for the picker
 ├── internal/
 │   ├── config/
 │   │   └── config.go            # Profile registry, atomic writes
@@ -171,9 +172,11 @@ tyv (TTY, profiles exist)
    ├─ load config → every row starts on the spinner (no stale numbers shown)
    ├─ for each profile, in parallel:
    │     agy --print /usage --output-format json   (HOME = profile home)
-   │       → parser: min(5h, weekly) per family → live row update
+   │       → parser: lowest of 5h/weekly per family, with that bucket's reset_time → live row update
    │       (on failure: fall back to the last reading in usage-cache.json)
-   ├─ raw terminal mode → picker loop (↑/↓, Enter, Esc/q, Ctrl+C)
+   ├─ raw terminal mode → picker loop (↑/↓, Enter, r = refresh, Esc/q, Ctrl+C)
+   │     r: rows back to the spinner; the fetcher cancels any old lookups and
+   │        starts a new round (ignored while a round is still running)
    └─ Enter → same path as `tyv <profile>`; lookups still running are cancelled
 ```
 
