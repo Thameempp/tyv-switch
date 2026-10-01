@@ -115,8 +115,6 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            release/*
-            release/SHA256SUMS
+          files: release/*
           draft: false
           prerelease: false
