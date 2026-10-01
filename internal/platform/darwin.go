@@ -24,7 +24,7 @@ func (p *darwinPlatform) AppDataDir() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("could not determine home directory: %w", err)
 	}
-	return filepath.Join(home, "Library", "Application Support", "sa"), nil
+	return filepath.Join(home, "Library", "Application Support", "tyv"), nil
 }
 
 // agyCandidates lists search paths for the agy binary on macOS.
@@ -57,10 +57,10 @@ func (p *darwinPlatform) Launch(executable string, args []string, env []string) 
 // findAGY is the shared lookup used by all Unix platforms.
 // candidates[0] being empty triggers a PATH search via exec.LookPath.
 func findAGY(candidates []string) (string, error) {
-	// Check SA_AGY_PATH override first.
-	if override := os.Getenv("SA_AGY_PATH"); override != "" {
+	// Check TYV_AGY_PATH override first.
+	if override := os.Getenv("TYV_AGY_PATH"); override != "" {
 		if err := checkExecutable(override); err != nil {
-			return "", fmt.Errorf("SA_AGY_PATH=%q: %w", override, err)
+			return "", fmt.Errorf("TYV_AGY_PATH=%q: %w", override, err)
 		}
 		return override, nil
 	}
@@ -83,7 +83,7 @@ func findAGY(candidates []string) (string, error) {
 	return "", fmt.Errorf(
 		"agy executable not found\n\n" +
 			"Install Antigravity CLI from https://antigravity.google/download\n" +
-			"or set SA_AGY_PATH to the absolute path of the agy binary",
+			"or set TYV_AGY_PATH to the absolute path of the agy binary",
 	)
 }
 

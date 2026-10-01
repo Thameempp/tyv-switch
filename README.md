@@ -1,44 +1,50 @@
-# sa
+# tyv
 
 Fast, privacy-first Antigravity account/profile manager.
 
 ## What it does
 
-`sa` lets you create named profiles and quickly switch between them when
-launching the Antigravity CLI (`agy`). Each profile is a named label that
-tracks which agy instance you want to use.
+`tyv` lets you create named profiles and quickly switch between them when
+launching the Antigravity CLI (`agy`). Each profile has its own isolated agy
+login, so you can keep several Google accounts signed in side by side. Running
+`tyv` with no arguments shows each account's remaining Gemini and Claude quota
+and the Google account (full email) it is signed into.
 
 ```
-sa add personal
-sa add work --email work@example.com
+tyv add personal
+tyv add work --email work@example.com
 
-sa personal       # launch agy as "personal"
-sa work           # launch agy as "work"
+tyv personal       # launch agy as "personal"
+tyv work           # launch agy as "work"
 
-sa list
-sa current
-sa rename work company
-sa remove company
-sa doctor
+tyv list
+tyv current
+tyv edit work company   # rename a profile
+tyv remove company
+tyv doctor
 ```
 
 ## Why it exists
 
 The Antigravity CLI (agy) does not provide an official multi-account switching
-mechanism. `sa` fills this gap by providing a fast, minimal profile registry
-backed by local configuration only. All authentication remains under agy's
-full control.
+mechanism. `tyv` fills this gap by giving each profile its own isolated agy
+home directory (and therefore its own Google login) plus a fast, minimal
+profile registry. All authentication remains under agy's full control; tyv
+never reads or stores credentials.
 
 ## Features
 
-- Named profiles (personal, work, university, …)
+- Named profiles (personal, work, university, …), each with its own agy login
+- Interactive selector (`tyv`) showing live remaining Gemini / Claude quota and each account's email
 - Near-instant profile switching (local operation, no network)
+- Guided first-time sign-in with `tyv add`
 - Optional email hint per profile for human reference
 - Atomic config writes — no partial-write corruption
 - Restrictive file permissions (0600 config, 0700 directories)
 - Full cross-platform support: macOS, Linux, Windows
-- No telemetry, no analytics, no network requests
-- No credential storage — authentication stays with agy
+- No telemetry, no analytics; tyv itself makes no network requests
+- No credential handling — authentication stays with agy
+- Zero external dependencies (Go standard library only)
 
 ## Installation
 
@@ -48,27 +54,27 @@ your PATH on most systems.
 ### Using make (recommended)
 
 ```sh
-git clone https://github.com/thameem/sa
-cd sa
+git clone https://github.com/thameem/tyv
+cd tyv
 make install
 ```
 
 ### Using the install script
 
 ```sh
-git clone https://github.com/thameem/sa
-cd sa
+git clone https://github.com/thameem/tyv
+cd tyv
 bash install.sh
 ```
 
 ### Manually (requires Go 1.27+)
 
 ```sh
-git clone https://github.com/thameem/sa
-cd sa
-go build -ldflags="-s -w" -o sa ./cmd/sa/
+git clone https://github.com/thameem/tyv
+cd tyv
+go build -ldflags="-s -w" -o tyv ./cmd/tyv/
 mkdir -p ~/.local/bin
-cp sa ~/.local/bin/sa
+cp tyv ~/.local/bin/tyv
 ```
 
 ### Verify your PATH
@@ -76,8 +82,8 @@ cp sa ~/.local/bin/sa
 `~/.local/bin` should be early in your PATH. Check with:
 
 ```sh
-which sa    # should show ~/.local/bin/sa
-sa version
+which tyv    # should show ~/.local/bin/tyv
+tyv version
 ```
 
 If `~/.local/bin` is not in your PATH, add it:
@@ -87,45 +93,42 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-> Note: Do NOT install to `/usr/local/bin` using sudo — macOS has a system
-> tool called `sa` (System Accounting) at that path. Installing to
-> `~/.local/bin` avoids this conflict and requires no elevated privileges.
-
 ## Quick Start
 
 ```sh
 # Create profiles
-sa add personal
-sa add work --email work@example.com
+tyv add personal
+tyv add work --email work@example.com
 
 # Switch and launch agy
-sa personal
-sa work
+tyv personal
+tyv work
 
 # Manage profiles
-sa list
-sa current
-sa rename work company
-sa remove company
+tyv list
+tyv current
+tyv edit work company
+tyv remove company
 
 # Diagnostics
-sa doctor
+tyv doctor
 ```
 
 ## Commands
 
 | Command | Description |
 |---|---|
-| `sa <profile>` | Switch to profile and launch Antigravity |
-| `sa add <name>` | Create a new profile |
-| `sa add <name> --email <addr>` | Create a profile with an email hint |
-| `sa list` | List all profiles |
-| `sa current` | Show the active profile |
-| `sa remove <name>` | Remove a profile |
-| `sa rename <old> <new>` | Rename a profile |
-| `sa doctor` | Run diagnostics |
-| `sa version` | Show version |
-| `sa help` | Show usage |
+| `tyv` | Interactive account selector with usage (↑/↓ move, Enter switch, Esc/q exit, Ctrl+C abort). Prints help when not run in a terminal or when no profiles exist |
+| `tyv <profile>` | Switch to profile and launch Antigravity |
+| `tyv add <name>` | Create a profile, then (if you agree) launch agy once so you can sign in with Google. tyv never sees credentials |
+| `tyv add <name> --email <addr>` | Create a profile with an email hint |
+| `tyv list` | List all profiles |
+| `tyv current` | Show the active profile |
+| `tyv remove <name>` | Remove a profile **and its agy login** (the profile's private home) |
+| `tyv edit <old> <new>` | Rename a profile (`rename` and `mv` also work). Keeps the profile's login |
+| `tyv doctor` | Run diagnostics |
+| `tyv version` | Show version |
+| `tyv help` | Show usage |
 
 ## Profile Names
 
@@ -146,47 +149,96 @@ Rejected: uppercase, path separators, shell metacharacters, reserved command nam
 The Antigravity CLI (agy v1.2.14) was inspected to understand its
 authentication architecture:
 
-- agy uses Google OAuth (access token + refresh token) stored in
-  `~/.gemini/oauth_creds.json`.
-- `~/.gemini/google_accounts.json` tracks the active account email.
+- agy uses Google OAuth (access token + refresh token). It stores them in the
+  OS keychain (macOS keychain, desktop keyring on Linux) and falls back to
+  `~/.gemini/oauth_creds.json` when the keychain is unavailable.
+- `~/.gemini/google_accounts.json` tracks the active account email in file
+  mode; with keychain storage agy only logs who signed in
+  (`~/.gemini/antigravity-cli/log/`).
 - agy has **no official** `--account`, `--profile`, `--login`, or `--switch`
   flags.
 - The binary contains an internal `--app_data_dir` flag (relative path only)
   with no stable, documented API contract for authentication isolation.
+- `GEMINI_CLI_APP_DATA_DIR` is **ignored** by agy, but agy resolves its data
+  from `$HOME`, so a per-profile `HOME` gives a fully separate login.
+- `agy --print /usage --output-format json` reports model quota
+  (`remaining_fraction`, `reset_time`) for the signed-in account.
 
-### Safe approach used by sa
+### Approach used by tyv
 
-`sa` does **not** manipulate authentication files, credentials, or OAuth
-tokens. Instead:
+`tyv` does **not** read or write authentication files, credentials, or OAuth
+tokens. (The one file it reads is agy's account index, only to show the signed-in
+email; see [Usage display](#usage-display).) Instead:
 
-1. `sa` maintains a local profile registry (`~/Library/Application Support/sa/sa.json`
+1. `tyv` keeps a local profile registry (`~/Library/Application Support/tyv/tyv.json`
    on macOS).
-2. Each profile gets a dedicated data directory within sa's app directory.
-3. When you run `sa personal`, sa looks up the profile, sets `SA_ACTIVE_PROFILE`
-   in the environment, then executes `agy` via `execve(2)` (Unix) or a child
-   process (Windows).
-4. agy starts using its own authentication — whichever Google account is logged
-   in.
+2. Each profile gets its own home directory, `profiles/<name>/home/`. It holds
+   private copies of the places agy keeps its login (`~/.gemini`, and on macOS
+   `~/Library/Keychains`; on Linux `~/.local/share/keyrings`) plus symlinks to
+   the rest of your real home, so git, ssh and other tools keep working.
+   Without the private keychain directory agy found your existing login through
+   the macOS keychain and every profile silently became the same account.
+   On macOS each profile also gets its own keychain file
+   (`profiles/<name>/home/Library/Keychains/login.keychain-db`, created with
+   `/usr/bin/security`), because agy stores its login in the keychain and
+   shows a "Keychain Not Found" dialog if none exists. That keychain uses a
+   fixed password and is protected only by the `0700` directory; it exists for
+   isolation, not secrecy. On Linux tyv hides the D-Bus session bus from agy so
+   it uses its private file storage instead of the shared desktop keyring.
+3. `tyv <profile>` runs agy with `HOME` pointing at that directory (and
+   `TYV_ACTIVE_PROFILE` set), via `execve(2)` on Unix or a child process on
+   Windows. agy does all authentication itself.
+4. `tyv add <name>` offers to launch agy once so you can sign in; each profile
+   signs in separately. Existing profiles must sign in again the first time
+   after upgrading, and settings in the real `~/.gemini` (settings, history,
+   MCP config) are not shared with profiles. Because the keychain is private
+   to each profile, tools run inside a profile (for example `git` with the
+   macOS keychain credential helper) will not see your login keychain.
+5. `tyv remove <name>` deletes the profile directory, including that profile's
+   agy login. Symlinks are removed, never followed, so your real home is
+   untouched.
 
-### Multi-Google-account workflows
+### Usage display
 
-If you need to use two different Google accounts:
+```
+AI Account Usage
 
-1. Log in to the first account in agy normally.
-2. Use `sa personal` for that account.
-3. To use a second Google account, log out of agy and log in with the second
-   account, then use `sa work`.
+  Account      Gemini    Claude  Email
+  ───────────────────────────────────────────────
+❯ personal       100%       98%  me@gmail.com
+  work            11%       77%  work@company.com
+  university       —         —   —
 
-This is the only safe, supported mechanism given agy's current architecture.
-If agy adds official multi-account support in future versions, `sa` will adopt
-it.
+  ↑/↓ Navigate   Enter Select   Esc Exit
+```
+
+tyv finds the email in two places, in this order: the `active` field of
+`<profile home>/.gemini/google_accounts.json` (agy's account index; written
+only when agy stores its login in a file), and otherwise the sign-in line
+(`authenticated successfully as …`) in agy's most recent logs for that profile.
+agy keeps its login in the macOS keychain, so on macOS the log line is the
+source. Tokens and the keychain are never read. The detected email is saved to
+the profile (the same field as the `--email` hint) so it survives log rotation.
+If nothing is found, tyv shows the `--email` hint, or `—`. A profile that is not signed in
+resolves to `—` within about a second.
+
+Plain `tyv` runs `agy --print /usage --output-format json` per profile (in
+parallel, in the background) and shows the lowest of the 5-hour and weekly
+remaining quota for Gemini and for Claude/GPT models. Figures show an animated
+spinner while loading and `—` if a profile is not signed in or agy cannot be
+queried. **Every run fetches fresh numbers**: all rows start on the spinner and
+fill in as each lookup finishes (about 10 seconds per profile, all in parallel),
+so you never see stale figures that suddenly change. If a lookup fails, the
+last successful reading is shown instead (kept in `usage-cache.json`:
+percentages only, no credentials). Switching with `tyv <profile>` never queries
+usage.
 
 ## Security
 
-- `sa` never asks for your Google password.
-- `sa` never stores OAuth tokens, access tokens, or refresh tokens.
-- `sa` never reads or copies credential files.
-- `sa` never makes network requests.
+- `tyv` never asks for your Google password.
+- `tyv` never stores OAuth tokens, access tokens, or refresh tokens.
+- `tyv` never reads or copies credential files, tokens or the keychain. The only things it reads are the signed-in email (see [Usage display](#usage-display)) and the account names/quota agy reports.
+- `tyv` never makes network requests itself (agy does, for sign-in and usage).
 - Configuration directory: 0700 permissions.
 - Configuration file: 0600 permissions.
 - All authentication is handled exclusively by agy.
@@ -200,7 +252,10 @@ a full security analysis.
 - No analytics.
 - No remote server.
 - No user profiling.
-- Only data stored: your profile names, optional email hints, and timestamps.
+- tyv's own data: profile names, optional email hints, timestamps, and the
+  cached usage percentages.
+- Each profile's agy login and data are written by agy inside that profile's
+  directory under tyv's config directory.
 
 See [PRIVACY.md](PRIVACY.md).
 
@@ -217,18 +272,21 @@ See [PRIVACY.md](PRIVACY.md).
 
 Note: "built" means the binary compiled successfully for the target. "tested"
 means executed on that OS. Cross-compiled builds have not been executed on
-their target OS.
+their target OS. In particular, the Windows console handling of the
+interactive selector is untested.
 
 ## Architecture
 
 ```
-sa
-├── cmd/sa/main.go              Command dispatcher
+tyv
+├── cmd/tyv/main.go              Command dispatcher
 ├── internal/
 │   ├── config/config.go        Profile registry, atomic config writes
 │   ├── doctor/doctor.go        Diagnostic command
 │   ├── exitcode/exitcode.go    Consistent exit codes
-│   ├── launcher/launcher.go    AGY process launching
+│   ├── launcher/launcher.go    agy launching, per-profile HOME isolation
+│   ├── providers/antigravity/  Quota lookup via `agy /usage` (quota, parser, cache)
+│   ├── selector/               Interactive picker (+ per-OS raw terminal mode)
 │   ├── platform/
 │   │   ├── platform.go         Interface definition
 │   │   ├── darwin.go           macOS implementation
@@ -238,27 +296,43 @@ sa
 └── tests/                      Integration tests
 ```
 
-All platform-specific code is isolated behind the `Platform` interface.
-Business logic contains no `runtime.GOOS` checks.
+Platform-specific code is isolated behind the `Platform` interface and
+build-tagged files (`platform/*`, `selector/term_*.go`). The only runtime OS
+checks are in `launcher` (Windows cannot symlink the home directory without
+elevated rights, so it only redirects `USERPROFILE`/`HOME`).
 
 ## Troubleshooting
 
-**sa: agy executable not found**
+**tyv: agy executable not found**
 Install the Antigravity CLI from https://antigravity.google/download
-or set `SA_AGY_PATH=/path/to/agy`.
+or set `TYV_AGY_PATH=/path/to/agy`.
 
-**sa: profile "x" does not exist**
-Run `sa list` to see available profiles. Create with `sa add x`.
+**tyv: profile "x" does not exist**
+Run `tyv list` to see available profiles. Create with `tyv add x`.
 
-**sa: configuration file appears to be corrupted**
-Run `sa doctor` for diagnostics. If needed:
+**tyv: configuration file appears to be corrupted**
+Run `tyv doctor` for diagnostics. If needed:
 ```sh
-rm ~/Library/Application\ Support/sa/sa.json   # macOS
+rm ~/Library/Application\ Support/tyv/tyv.json   # macOS
 ```
+
+**macOS shows "Keychain Not Found … antigravity" during sign-in**
+Choose **Cancel**, never "Reset To Defaults". This only happens for profiles
+created before tyv gave each profile its own keychain; update tyv, then
+`tyv remove <name>` and `tyv add <name>` again.
+
+**A profile's Email column shows `—`**
+The profile is not signed in, or agy has not logged a sign-in for it yet. Run
+`tyv <name>`, sign in, and run `tyv` again. You can set a fallback with
+`tyv add <name> --email <addr>` when creating the profile.
+
+**A profile shows `—` in the selector**
+That profile is not signed in yet (run `tyv <name>` and sign in), or agy could
+not be queried (check `tyv doctor`, then try `agy --print /usage` manually).
 
 **Enable debug output**
 ```sh
-SA_DEBUG=1 sa personal
+TYV_DEBUG=1 tyv personal
 ```
 Debug output never prints credentials.
 
@@ -266,7 +340,7 @@ Debug output never prints credentials.
 
 ```sh
 # Build
-go build ./cmd/sa/
+go build ./cmd/tyv/
 
 # Test (with race detector)
 go test -race ./...
@@ -276,8 +350,8 @@ go vet ./...
 gofmt -l .
 
 # Cross-platform builds
-GOOS=linux GOARCH=amd64 go build ./cmd/sa/
-GOOS=windows GOARCH=amd64 go build ./cmd/sa/
+GOOS=linux GOARCH=amd64 go build ./cmd/tyv/
+GOOS=windows GOARCH=amd64 go build ./cmd/tyv/
 ```
 
 ## Testing
@@ -287,7 +361,10 @@ go test -v -race ./...
 ```
 
 Tests cover:
-- Profile CRUD (create, read, update, delete)
+- Profile CRUD (create, read, update, delete); removal never follows symlinks
+- Per-profile `HOME` isolation of the launch environment
+- Selector navigation, wrap-around, exit keys and live updates
+- `/usage` parsing and the usage cache
 - Atomic config writes
 - File permission verification
 - Corruption detection
@@ -299,13 +376,21 @@ Tests cover:
 ## Building Releases
 
 ```sh
-./scripts/build-release.sh   # if present, otherwise see Makefile
+make cross-build   # all platforms into dist/
+make checksums     # SHA-256 sums for dist/
 ```
 
-Or manually:
-```sh
-GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o dist/sa-darwin-arm64 ./cmd/sa/
-```
+Pushing a `v*` tag runs the CI release job, which publishes the binaries and
+`SHA256SUMS`.
+
+## Environment Variables
+
+| Variable | Purpose |
+|---|---|
+| `TYV_AGY_PATH` | Absolute path to the agy executable |
+| `TYV_DEBUG=1` | Debug output (never prints credentials) |
+| `TYV_INSTALL_DIR` | Install directory for `install.sh` (default `~/.local/bin`) |
+| `TYV_ACTIVE_PROFILE` | Set by tyv for agy: the active profile name |
 
 ## Contributing
 

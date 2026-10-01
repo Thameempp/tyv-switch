@@ -1,10 +1,11 @@
-// Package config manages sa's own configuration file: profile list, current
+// Package config manages tyv's own configuration file: profile list, current
 // profile, and per-profile metadata. It does NOT store authentication secrets.
 //
 // File layout (within AppDataDir):
 //
-//	sa.json          — main config file (profiles + current)
-//	profiles/<name>/ — per-profile AGY data directory (managed by agy)
+//	tyv.json          — main config file (profiles + current)
+//	profiles/<name>/ — per-profile directory; its home/ subdirectory is the
+//	                   isolated HOME agy runs with (holds that profile's login)
 package config
 
 import (
@@ -18,7 +19,7 @@ import (
 )
 
 const (
-	configFileName = "sa.json"
+	configFileName = "tyv.json"
 	profilesDir    = "profiles"
 	configVersion  = 1
 )
@@ -38,14 +39,14 @@ type Profile struct {
 	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
 }
 
-// Config is the root configuration structure persisted to sa.json.
+// Config is the root configuration structure persisted to tyv.json.
 type Config struct {
 	Version  int                `json:"version"`
 	Current  string             `json:"current,omitempty"`
 	Profiles map[string]Profile `json:"profiles"`
 }
 
-// Manager handles loading, saving, and mutating the sa configuration.
+// Manager handles loading, saving, and mutating the tyv configuration.
 type Manager struct {
 	appDataDir string
 	mu         sync.RWMutex
@@ -58,13 +59,15 @@ func NewManager(appDataDir string) *Manager {
 	return &Manager{appDataDir: appDataDir}
 }
 
-// configPath returns the absolute path to the config file.
-func (m *Manager) configPath() string {
+// ConfigPath returns the absolute path to the config file.
+func (m *Manager) ConfigPath() string {
 	return filepath.Join(m.appDataDir, configFileName)
 }
 
-// ProfileDataDir returns the directory where agy stores its data for the
-// given profile. This is the value passed to agy via the environment.
+func (m *Manager) configPath() string { return m.ConfigPath() }
+
+// ProfileDataDir returns the directory that holds everything tyv keeps for
+// the given profile, including the isolated home agy runs with.
 func (m *Manager) ProfileDataDir(name string) string {
 	return filepath.Join(m.appDataDir, profilesDir, name)
 }
@@ -104,7 +107,7 @@ func (m *Manager) Load() error {
 				"File: %s\n\n"+
 				"Recovery options:\n"+
 				"  1. Delete the file and re-add your profiles: rm %q\n"+
-				"  2. Run: sa doctor",
+				"  2. Run: tyv doctor",
 			err, path, path,
 		)
 	}
@@ -137,7 +140,7 @@ func (m *Manager) save() error {
 
 	// Write to a temp file in the same directory to ensure rename is atomic.
 	dir := filepath.Dir(m.configPath())
-	tmp, err := os.CreateTemp(dir, ".sa-config-*.tmp")
+	tmp, err := os.CreateTemp(dir, ".tyv-config-*.tmp")
 	if err != nil {
 		return fmt.Errorf("could not create temp file for config: %w", err)
 	}
@@ -211,7 +214,7 @@ func (m *Manager) AddProfile(name, email string) error {
 		return fmt.Errorf(
 			"profile %q already exists\n\n"+
 				"Use a different name or remove it first:\n"+
-				"  sa remove %s",
+				"  tyv remove %s",
 			name, name,
 		)
 	}
@@ -236,8 +239,10 @@ func (m *Manager) AddProfile(name, email string) error {
 	return m.save()
 }
 
-// RemoveProfile deletes a profile and its data directory.
-// It does NOT delete any AGY authentication credentials.
+// RemoveProfile deletes a profile and its data directory. That directory
+// holds the profile's own agy login (its private ~/.gemini), which is deleted
+// with it; the symlinks into the real home are removed, never followed, so
+// files in the real home are untouched.
 func (m *Manager) RemoveProfile(name string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -262,7 +267,7 @@ func (m *Manager) RemoveProfile(name string) error {
 		return err
 	}
 
-	// Remove the profile's AGY data directory.
+	// Remove the profile's data directory.
 	profileDir := filepath.Join(m.appDataDir, profilesDir, name)
 	if err := os.RemoveAll(profileDir); err != nil {
 		// Non-fatal: config is already updated.
@@ -343,6 +348,24 @@ func (m *Manager) SetCurrent(name string) error {
 	return m.save()
 }
 
+// SetEmail records the account email shown for a profile. It is a no-op when
+// the profile does not exist or the value is unchanged.
+func (m *Manager) SetEmail(name, email string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.cfg == nil {
+		return nil
+	}
+	p, ok := m.cfg.Profiles[name]
+	if !ok || p.Email == email {
+		return nil
+	}
+	p.Email = email
+	m.cfg.Profiles[name] = p
+	return m.save()
+}
+
 // TouchLastUsed updates the LastUsedAt timestamp for the given profile.
 func (m *Manager) TouchLastUsed(name string) error {
 	m.mu.Lock()
@@ -375,7 +398,7 @@ func profileNotFoundError(name string, cfg *Config) error {
 			"profile %q does not exist\n\n"+
 				"No profiles have been created yet.\n\n"+
 				"Create one with:\n"+
-				"  sa add %s",
+				"  tyv add %s",
 			name, name,
 		)
 	}
@@ -388,7 +411,7 @@ func profileNotFoundError(name string, cfg *Config) error {
 		"profile %q does not exist\n\n"+
 			"Available profiles:\n%s\n"+
 			"Create it with:\n"+
-			"  sa add %s",
+			"  tyv add %s",
 		name, list, name,
 	)
 }

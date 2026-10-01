@@ -1,4 +1,4 @@
-// Package exitcode defines standard exit codes for the sa CLI.
+// Package exitcode defines standard exit codes for the tyv CLI.
 package exitcode
 
 const (
@@ -16,4 +16,6 @@ const (
 	ExecutableNotFound = 5
 	// PermissionError indicates a filesystem permission error.
 	PermissionError = 6
+	// Interrupted indicates the user cancelled with Ctrl+C (128 + SIGINT).
+	Interrupted = 130
 )

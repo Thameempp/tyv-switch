@@ -22,13 +22,13 @@ func (p *linuxPlatform) AppDataDir() (string, error) {
 	// XDG Base Directory Specification.
 	// XDG_CONFIG_HOME defaults to $HOME/.config
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
-		return filepath.Join(xdg, "sa"), nil
+		return filepath.Join(xdg, "tyv"), nil
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("could not determine home directory: %w", err)
 	}
-	return filepath.Join(home, ".config", "sa"), nil
+	return filepath.Join(home, ".config", "tyv"), nil
 }
 
 func agyCandidates() []string {
@@ -56,9 +56,9 @@ func (p *linuxPlatform) Launch(executable string, args []string, env []string) e
 // on darwin. On Linux we need them here directly.
 
 func findAGY(candidates []string) (string, error) {
-	if override := os.Getenv("SA_AGY_PATH"); override != "" {
+	if override := os.Getenv("TYV_AGY_PATH"); override != "" {
 		if err := checkExecutable(override); err != nil {
-			return "", fmt.Errorf("SA_AGY_PATH=%q: %w", override, err)
+			return "", fmt.Errorf("TYV_AGY_PATH=%q: %w", override, err)
 		}
 		return override, nil
 	}
@@ -79,7 +79,7 @@ func findAGY(candidates []string) (string, error) {
 	return "", fmt.Errorf(
 		"agy executable not found\n\n" +
 			"Install Antigravity CLI from https://antigravity.google/download\n" +
-			"or set SA_AGY_PATH to the absolute path of the agy binary",
+			"or set TYV_AGY_PATH to the absolute path of the agy binary",
 	)
 }
 

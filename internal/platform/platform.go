@@ -15,11 +15,11 @@ type Platform interface {
 	// Arch returns the current CPU architecture (e.g. "arm64", "amd64").
 	Arch() string
 
-	// AppDataDir returns the root directory for sa's application data.
-	// This is where sa stores its own configuration (not AGY config).
-	// On macOS:  ~/Library/Application Support/sa
-	// On Linux:  $XDG_CONFIG_HOME/sa  (default: ~/.config/sa)
-	// On Windows: %APPDATA%\sa
+	// AppDataDir returns the root directory for tyv's application data.
+	// This is where tyv stores its own configuration (not AGY config).
+	// On macOS:  ~/Library/Application Support/tyv
+	// On Linux:  $XDG_CONFIG_HOME/tyv  (default: ~/.config/tyv)
+	// On Windows: %APPDATA%\tyv
 	AppDataDir() (string, error)
 
 	// FindAGY searches common locations for the agy executable and returns

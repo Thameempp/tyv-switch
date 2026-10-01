@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# install.sh — build sa from source and install to ~/.local/bin
+# install.sh — build tyv from source and install to ~/.local/bin
 # Usage:  bash install.sh
 
 set -euo pipefail
 
-BINARY_NAME="sa"
-INSTALL_DIR="${SA_INSTALL_DIR:-$HOME/.local/bin}"
+BINARY_NAME="tyv"
+INSTALL_DIR="${TYV_INSTALL_DIR:-$HOME/.local/bin}"
 
-echo "Building sa..."
+echo "Building tyv..."
 
 # Find Go
 GO_BIN=""
@@ -33,7 +33,7 @@ fi
 echo "  Go: $GO_BIN ($($GO_BIN version | awk '{print $3}'))"
 
 # Build
-"$GO_BIN" build -ldflags="-s -w" -o "$BINARY_NAME" ./cmd/sa/
+"$GO_BIN" build -ldflags="-s -w" -o "$BINARY_NAME" ./cmd/tyv/
 
 # Install
 mkdir -p "$INSTALL_DIR"
@@ -56,17 +56,17 @@ else
   FOUND="$(command -v $BINARY_NAME 2>/dev/null || true)"
   if [ "$FOUND" = "$INSTALL_DIR/$BINARY_NAME" ]; then
     echo "Ready. Try:"
-    echo "  sa add personal"
-    echo "  sa add work --email work@example.com"
-    echo "  sa list"
-    echo "  sa personal"
+    echo "  tyv add personal"
+    echo "  tyv add work --email work@example.com"
+    echo "  tyv list"
+    echo "  tyv personal"
   elif [ -n "$FOUND" ] && [ "$FOUND" != "$INSTALL_DIR/$BINARY_NAME" ]; then
-    echo "Warning: 'sa' found at $FOUND (before $INSTALL_DIR/$BINARY_NAME in PATH)."
+    echo "Warning: 'tyv' found at $FOUND (before $INSTALL_DIR/$BINARY_NAME in PATH)."
     echo "Move $INSTALL_DIR earlier in your PATH, or use the full path:"
-    echo "  $INSTALL_DIR/sa add personal"
+    echo "  $INSTALL_DIR/tyv add personal"
   else
     echo "Ready. Open a new shell or run:"
     echo "  export PATH=\"$INSTALL_DIR:\$PATH\""
-    echo "Then try: sa add personal"
+    echo "Then try: tyv add personal"
   fi
 fi

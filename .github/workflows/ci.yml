@@ -30,6 +30,11 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+      - name: Vet (Windows and macOS targets)
+        run: |
+          GOOS=windows go vet ./...
+          GOOS=darwin go vet ./...
+
       - name: Test (with race detector)
         run: go test -race -v -count=1 ./...
 
@@ -42,22 +47,22 @@ jobs:
         include:
           - goos: darwin
             goarch: arm64
-            output: sa-darwin-arm64
+            output: tyv-darwin-arm64
           - goos: darwin
             goarch: amd64
-            output: sa-darwin-amd64
+            output: tyv-darwin-amd64
           - goos: linux
             goarch: amd64
-            output: sa-linux-amd64
+            output: tyv-linux-amd64
           - goos: linux
             goarch: arm64
-            output: sa-linux-arm64
+            output: tyv-linux-arm64
           - goos: windows
             goarch: amd64
-            output: sa-windows-amd64.exe
+            output: tyv-windows-amd64.exe
           - goos: windows
             goarch: arm64
-            output: sa-windows-arm64.exe
+            output: tyv-windows-arm64.exe
     steps:
       - uses: actions/checkout@v4
 
@@ -72,7 +77,7 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          go build -ldflags="-s -w" -o dist/${{ matrix.output }} ./cmd/sa/
+          go build -ldflags="-s -w" -o dist/${{ matrix.output }} ./cmd/tyv/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

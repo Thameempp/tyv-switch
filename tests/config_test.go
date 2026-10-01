@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/thameem/sa/internal/config"
+	"github.com/thameem/tyv/internal/config"
 )
 
 // newTestManager creates a Manager backed by a temp directory.
@@ -200,7 +200,7 @@ func TestConfigPermissions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	configPath := filepath.Join(dir, "sa.json")
+	configPath := filepath.Join(dir, "tyv.json")
 	info, err := os.Stat(configPath)
 	if err != nil {
 		t.Fatalf("stat config file: %v", err)
@@ -217,7 +217,7 @@ func TestCorruptedConfig(t *testing.T) {
 	dir := t.TempDir()
 
 	// Write invalid JSON.
-	configPath := filepath.Join(dir, "sa.json")
+	configPath := filepath.Join(dir, "tyv.json")
 	if err := os.WriteFile(configPath, []byte("{not valid json"), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -230,7 +230,7 @@ func TestCorruptedConfig(t *testing.T) {
 
 func TestIsCorrupted_ValidFile(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "sa.json")
+	path := filepath.Join(dir, "tyv.json")
 
 	data, _ := json.Marshal(map[string]interface{}{
 		"version":  1,
@@ -248,7 +248,7 @@ func TestIsCorrupted_ValidFile(t *testing.T) {
 
 func TestIsCorrupted_InvalidJSON(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "sa.json")
+	path := filepath.Join(dir, "tyv.json")
 
 	if err := os.WriteFile(path, []byte("{bad"), 0600); err != nil {
 		t.Fatal(err)
@@ -264,7 +264,7 @@ func TestIsCorrupted_InvalidJSON(t *testing.T) {
 }
 
 func TestIsCorrupted_MissingFile(t *testing.T) {
-	corrupted, _ := config.IsCorrupted("/nonexistent/path/sa.json")
+	corrupted, _ := config.IsCorrupted("/nonexistent/path/tyv.json")
 	if corrupted {
 		t.Error("missing file should not be reported as corrupted")
 	}

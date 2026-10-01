@@ -18,7 +18,7 @@ func (p *windowsPlatform) OS() string   { return "Windows" }
 func (p *windowsPlatform) Arch() string { return runtime.GOARCH }
 
 func (p *windowsPlatform) AppDataDir() (string, error) {
-	// Windows convention: %APPDATA%\sa
+	// Windows convention: %APPDATA%\tyv
 	appData := os.Getenv("APPDATA")
 	if appData == "" {
 		// Fallback: use USERPROFILE\AppData\Roaming
@@ -28,7 +28,7 @@ func (p *windowsPlatform) AppDataDir() (string, error) {
 		}
 		appData = filepath.Join(profile, "AppData", "Roaming")
 	}
-	return filepath.Join(appData, "sa"), nil
+	return filepath.Join(appData, "tyv"), nil
 }
 
 func agyCandidates() []string {
@@ -66,9 +66,9 @@ func (p *windowsPlatform) Launch(executable string, args []string, env []string)
 }
 
 func findAGY(candidates []string) (string, error) {
-	if override := os.Getenv("SA_AGY_PATH"); override != "" {
+	if override := os.Getenv("TYV_AGY_PATH"); override != "" {
 		if err := checkExecutable(override); err != nil {
-			return "", fmt.Errorf("SA_AGY_PATH=%q: %w", override, err)
+			return "", fmt.Errorf("TYV_AGY_PATH=%q: %w", override, err)
 		}
 		return override, nil
 	}
@@ -93,7 +93,7 @@ func findAGY(candidates []string) (string, error) {
 	return "", fmt.Errorf(
 		"agy executable not found\n\n" +
 			"Install Antigravity CLI from https://antigravity.google/download\n" +
-			"or set SA_AGY_PATH to the absolute path of the agy executable",
+			"or set TYV_AGY_PATH to the absolute path of the agy executable",
 	)
 }
 

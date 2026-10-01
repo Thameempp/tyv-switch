@@ -1,3 +1,3 @@
-module github.com/thameem/sa
+module github.com/thameem/tyv
 
 go 1.27

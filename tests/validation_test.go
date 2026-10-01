@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 
-	"github.com/thameem/sa/internal/validation"
+	"github.com/thameem/tyv/internal/validation"
 )
 
 func TestProfileName_Valid(t *testing.T) {

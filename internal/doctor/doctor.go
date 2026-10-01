@@ -1,15 +1,14 @@
-// Package doctor implements the `sa doctor` diagnostic command.
+// Package doctor implements the `tyv doctor` diagnostic command.
 // It inspects the environment and reports status without exposing secrets.
 package doctor
 
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/thameem/sa/internal/config"
-	"github.com/thameem/sa/internal/platform"
+	"github.com/thameem/tyv/internal/config"
+	"github.com/thameem/tyv/internal/platform"
 )
 
 // Result holds the outcome of a doctor inspection.
@@ -37,7 +36,7 @@ type AGYInfo struct {
 	Error    string
 }
 
-// ConfigInfo describes the sa configuration state.
+// ConfigInfo describes the tyv configuration state.
 type ConfigInfo struct {
 	Dir    string
 	Status string
@@ -65,10 +64,10 @@ type CredentialInfo struct {
 func Run(plat platform.Platform, mgr *config.Manager, appDataDir string) Result {
 	r := Result{
 		Network: NetworkInfo{
-			Note: "Not required for local profile operations",
+			Note: "tyv makes no network requests; agy contacts Google for sign-in and usage lookups",
 		},
 		Credentials: CredentialInfo{
-			Note: "Managed exclusively by Antigravity CLI (agy) — sa does not access credentials",
+			Note: "Managed exclusively by Antigravity CLI (agy) — tyv does not access credentials",
 		},
 	}
 
@@ -100,7 +99,7 @@ func Run(plat platform.Platform, mgr *config.Manager, appDataDir string) Result 
 			Status: "not initialised (no profiles created yet)",
 		}
 	} else {
-		configPath := filepath.Join(appDataDir, "sa.json")
+		configPath := mgr.ConfigPath()
 		if corrupted, desc := config.IsCorrupted(configPath); corrupted {
 			r.Config = ConfigInfo{
 				Dir:    appDataDir,
@@ -146,7 +145,7 @@ func Print(r Result) {
 		fmt.Printf("  %-20s %s\n", label+":", value)
 	}
 
-	fmt.Println("sa doctor")
+	fmt.Println("tyv doctor")
 
 	section("Platform")
 	item("OS", r.Platform.OS)
