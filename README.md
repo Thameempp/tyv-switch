@@ -42,36 +42,54 @@ full control.
 
 ## Installation
 
-### From GitHub Releases (recommended)
+Install to `~/.local/bin` (no sudo needed). This directory is already in
+your PATH on most systems.
 
-1. Download the binary for your platform from the Releases page.
-2. Verify the checksum.
-3. Move to a directory in your PATH:
-
-```sh
-# macOS (Apple Silicon)
-curl -L https://github.com/thameem/sa/releases/latest/download/sa-darwin-arm64 -o sa
-chmod +x sa
-mv sa /usr/local/bin/
-
-# macOS (Intel)
-curl -L https://github.com/thameem/sa/releases/latest/download/sa-darwin-amd64 -o sa
-chmod +x sa
-mv sa /usr/local/bin/
-
-# Linux (amd64)
-curl -L https://github.com/thameem/sa/releases/latest/download/sa-linux-amd64 -o sa
-chmod +x sa
-mv sa ~/.local/bin/
-```
-
-### From source (requires Go 1.27+)
+### Using make (recommended)
 
 ```sh
 git clone https://github.com/thameem/sa
 cd sa
-go build -o sa ./cmd/sa/
+make install
 ```
+
+### Using the install script
+
+```sh
+git clone https://github.com/thameem/sa
+cd sa
+bash install.sh
+```
+
+### Manually (requires Go 1.27+)
+
+```sh
+git clone https://github.com/thameem/sa
+cd sa
+go build -ldflags="-s -w" -o sa ./cmd/sa/
+mkdir -p ~/.local/bin
+cp sa ~/.local/bin/sa
+```
+
+### Verify your PATH
+
+`~/.local/bin` should be early in your PATH. Check with:
+
+```sh
+which sa    # should show ~/.local/bin/sa
+sa version
+```
+
+If `~/.local/bin` is not in your PATH, add it:
+
+```sh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+> Note: Do NOT install to `/usr/local/bin` using sudo — macOS has a system
+> tool called `sa` (System Accounting) at that path. Installing to
+> `~/.local/bin` avoids this conflict and requires no elevated privileges.
 
 ## Quick Start
 
