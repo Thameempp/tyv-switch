@@ -25,14 +25,12 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"sort"
 	"strings"
-	"sync"
 	"syscall"
 
 	"github.com/Thameempp/tyv-switch/internal/config"
@@ -142,42 +140,14 @@ func cmdInteractive(plat platform.Platform, mgr *config.Manager, appDataDir stri
 	start := 0
 	for i, n := range names {
 		rows[i] = selector.Row{Name: n, Gemini: selector.Loading, Claude: selector.Loading,
-			Email: profileEmail(l, mgr, cfg.Profiles[n])}
+			Email: profileEmail(l, mgr, cfg.Profiles[n]), Current: n == cfg.Current}
 		if n == cfg.Current {
 			start = i
 		}
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	updates := make(chan selector.Update, len(rows))
-	agyPath, agyErr := l.FindAGY()
-	var wg sync.WaitGroup
-	var cacheMu sync.Mutex
-	for i := range names {
-		if agyErr != nil {
-			updates <- selector.Update{Index: i, Gemini: selector.Unknown, Claude: selector.Unknown}
-			continue
-		}
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			u := selector.Update{Index: i, Gemini: selector.Unknown, Claude: selector.Unknown}
-			if env, err := l.ProfileEnv(names[i]); err == nil {
-				usage, err := antigravity.Fetch(ctx, agyPath, env)
-				cacheMu.Lock()
-				if err == nil {
-					u.Gemini, u.Claude = usage.Gemini, usage.Claude
-					cache.Set(names[i], usage)
-					cache.Save()
-				} else if old, ok := cache.Entries[names[i]]; ok {
-					u.Gemini, u.Claude = old.Usage.Gemini, old.Usage.Claude
-				}
-				cacheMu.Unlock()
-			}
-			updates <- u
-		}(i)
-	}
+	f := newUsageFetcher(l, names, cache)
+	f.Start()
 
 	restore, err := selector.MakeRaw()
 	if err != nil {
@@ -200,12 +170,11 @@ func cmdInteractive(plat platform.Platform, mgr *config.Manager, appDataDir stri
 		}
 	}()
 
-	res, idx, err := selector.Run(os.Stdin, os.Stdout, rows, start, updates)
+	res, idx, err := selector.Run(os.Stdin, os.Stdout, rows, start, f.updates, f.Start)
 	signal.Stop(sigs)
 	close(sigs)
 	restore()
-	cancel() // stop any lookups still running
-	wg.Wait()
+	f.Stop() // cancel any lookups still running
 	if err != nil {
 		errorf("%v", err)
 		return exitcode.GeneralError
@@ -339,9 +308,14 @@ func cmdList(mgr *config.Manager) int {
 		names = append(names, name)
 	}
 	sort.Strings(names)
+	colour := selector.IsTerminal() && selector.UseColor()
 	for _, name := range names {
 		if name == cfg.Current {
-			fmt.Printf("%s (current)\n", name)
+			label := name
+			if colour {
+				label = selector.Blue(name)
+			}
+			fmt.Printf("%s (current)\n", label)
 		} else {
 			fmt.Println(name)
 		}

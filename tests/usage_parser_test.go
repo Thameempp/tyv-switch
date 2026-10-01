@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/Thameempp/tyv-switch/internal/providers/antigravity"
 )
@@ -124,5 +125,25 @@ func TestReadEmailFromLogs(t *testing.T) {
 	}
 	if got := antigravity.ReadEmail(home); got != "idx@example.com" {
 		t.Errorf("got %q, want index email", got)
+	}
+}
+
+func TestParseUsageResetTimeOfLimitingBucket(t *testing.T) {
+	const out = `{"command":{"data":{"groups":[
+{"name":"Gemini Models","buckets":[
+  {"remaining_fraction":0.9,"reset_time":"2026-10-08T09:00:00Z"},
+  {"remaining_fraction":0.5,"reset_time":"2026-10-01T20:00:00Z"}]},
+{"name":"Claude and GPT models","buckets":[
+  {"remaining_fraction":1,"reset_time":"2026-10-08T15:00:00Z"},
+  {"remaining_fraction":1,"reset_time":"2026-10-01T21:00:00Z"}]}]}}}`
+	u, err := antigravity.Parse([]byte(out))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := u.GeminiReset.UTC().Format(time.RFC3339); got != "2026-10-01T20:00:00Z" {
+		t.Errorf("gemini reset = %s, want the lowest bucket's (5h)", got)
+	}
+	if got := u.ClaudeReset.UTC().Format(time.RFC3339); got != "2026-10-01T21:00:00Z" {
+		t.Errorf("claude reset = %s, want the sooner reset on a tie", got)
 	}
 }

@@ -118,7 +118,7 @@ tyv doctor
 
 | Command | Description |
 |---|---|
-| `tyv` | Interactive account selector with usage (↑/↓ move, Enter switch, Esc/q exit, Ctrl+C abort). Prints help when not run in a terminal or when no profiles exist |
+| `tyv` | Interactive account selector with usage (↑/↓ move, Enter switch, **r** refresh usage, Esc/q exit, Ctrl+C abort). Prints help when not run in a terminal or when no profiles exist |
 | `tyv <profile>` | Switch to profile and launch Antigravity |
 | `tyv add <name>` | Create a profile, then (if you agree) launch agy once so you can sign in with Google. tyv never sees credentials |
 | `tyv add <name> --email <addr>` | Create a profile with an email hint |
@@ -203,13 +203,13 @@ email; see [Usage display](#usage-display).) Instead:
 ```
 AI Account Usage
 
-  Account      Gemini    Claude  Email
-  ───────────────────────────────────────────────
-❯ personal       100%       98%  me@gmail.com
-  work            11%       77%  work@company.com
-  university       —         —   —
+  Account         Gemini            Claude  Email
+  ───────────────────────────────────────────────────────────
+❯ personal  100% (6d 23h 59m)    98% (3h 10m)  me@gmail.com
+  work          11% (4h 12m)  77% (6d 1h 44m)  work@company.com
+  university               —                —  —
 
-  ↑/↓ Navigate   Enter Select   Esc Exit
+  ↑/↓ Navigate   Enter Select   R Refresh   Esc Exit
 ```
 
 tyv finds the email in two places, in this order: the `active` field of
@@ -224,7 +224,20 @@ resolves to `—` within about a second.
 
 Plain `tyv` runs `agy --print /usage --output-format json` per profile (in
 parallel, in the background) and shows the lowest of the 5-hour and weekly
-remaining quota for Gemini and for Claude/GPT models. Figures show an animated
+remaining quota for Gemini and for Claude/GPT models. The bracket after each
+percentage is the time until that limiting quota resets, in
+plain units: `6d 14h 5m`, `4h 12m` or `35m`.
+
+Press **r** to fetch fresh numbers again without leaving the picker: all rows go
+back to the spinner and update as each lookup finishes (`r` is ignored while a
+refresh is already running).
+
+The current profile (the one you last switched to) is shown with its name and
+email in blue, and `tyv list` marks it the same way.
+
+Percentages are coloured by how much quota is left: **green** at 50% or more,
+**yellow** from 20% to 49%, **red** below 20%. Set `NO_COLOR=1` (or use a
+`TERM=dumb` terminal) to turn colours off. Figures show an animated
 spinner while loading and `—` if a profile is not signed in or agy cannot be
 queried. **Every run fetches fresh numbers**: all rows start on the spinner and
 fill in as each lookup finishes (about 10 seconds per profile, all in parallel),
@@ -391,6 +404,7 @@ Pushing a `v*` tag runs the CI release job, which publishes the binaries and
 | `TYV_DEBUG=1` | Debug output (never prints credentials) |
 | `TYV_INSTALL_DIR` | Install directory for `install.sh` (default `~/.local/bin`) |
 | `TYV_ACTIVE_PROFILE` | Set by tyv for agy: the active profile name |
+| `NO_COLOR` | Any non-empty value turns off colours in the selector |
 
 ## Contributing
 

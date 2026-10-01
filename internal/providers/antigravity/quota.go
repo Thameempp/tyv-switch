@@ -23,10 +23,13 @@ const Unknown = -1
 // Timeout bounds a single quota lookup (agy can take ~10s).
 const Timeout = 40 * time.Second
 
-// Usage holds remaining quota as whole percentages (0–100).
+// Usage holds remaining quota as whole percentages (0–100) and when the
+// limiting quota window resets (zero if unknown).
 type Usage struct {
-	Gemini int
-	Claude int
+	Gemini      int
+	Claude      int
+	GeminiReset time.Time
+	ClaudeReset time.Time
 }
 
 // Fetch asks agy for the quota of the account it is signed into under env.
@@ -44,13 +47,13 @@ func Fetch(ctx context.Context, agyPath string, env []string) (Usage, error) {
 	err := cmd.Run()
 
 	if notSignedIn(out.buf.Bytes()) {
-		return Usage{Unknown, Unknown}, errNotSignedIn
+		return Usage{Gemini: Unknown, Claude: Unknown}, errNotSignedIn
 	}
 	if ctx.Err() != nil {
-		return Usage{Unknown, Unknown}, fmt.Errorf("usage lookup timed out")
+		return Usage{Gemini: Unknown, Claude: Unknown}, fmt.Errorf("usage lookup timed out")
 	}
 	if err != nil && out.buf.Len() == 0 {
-		return Usage{Unknown, Unknown}, fmt.Errorf("agy failed: %w", err)
+		return Usage{Gemini: Unknown, Claude: Unknown}, fmt.Errorf("agy failed: %w", err)
 	}
 	return Parse(out.buf.Bytes())
 }

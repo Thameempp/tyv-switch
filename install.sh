@@ -37,6 +37,9 @@ echo "  Go: $GO_BIN ($($GO_BIN version | awk '{print $3}'))"
 
 # Install
 mkdir -p "$INSTALL_DIR"
+# Remove first: overwriting a binary in place makes macOS kill the new one
+# ("zsh: killed") because it caches the old file's code signature.
+rm -f "$INSTALL_DIR/$BINARY_NAME"
 mv "$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
 chmod 755 "$INSTALL_DIR/$BINARY_NAME"
 
